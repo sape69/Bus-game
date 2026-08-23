@@ -57,10 +57,20 @@ jobs:
         run: |
           godot --headless --editor --quit
 
-      - name: Build APK
-        run: |
-          mkdir -p build
-          godot --headless --path . --export-debug "Android" build/BusMatch.apk
+      - name: Check Android export configuration
+  run: |
+    godot --headless --path . --editor --quit
+
+    echo "===== EXPORT PRESETS ====="
+    cat export_presets.cfg
+
+    echo "===== GODOT VERSION ====="
+    godot --version
+
+- name: Build APK
+  run: |
+    mkdir -p build
+    godot --headless --path . --export-debug "Android" build/BusMatch.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
