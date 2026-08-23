@@ -11,14 +11,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Godot
+      - name: Setup Godot Standard
         uses: chickensoft-games/setup-godot@v2
         with:
           version: 4.5.1
+          use-dotnet: false
           include-templates: true
+
+      - name: Check Godot
+        run: |
+          godot --version
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -26,19 +31,22 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Android SDK
+      - name: Setup Android
         uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK packages
+      - name: Install Android SDK
         run: |
           sdkmanager "platform-tools"
           sdkmanager "platforms;android-35"
-          sdkmanager "build-tools;35.0.0"
+          sdkmanager "build-tools;35.0.1"
+
+      - name: Import project
+        run: |
+          godot --headless --editor --quit
 
       - name: Build APK
         run: |
           mkdir -p build
-          godot --headless --path . --editor --quit
           godot --headless --path . --export-debug "Android" build/BusMatch.apk
 
       - name: Upload APK
