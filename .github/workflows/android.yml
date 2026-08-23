@@ -14,7 +14,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Godot Standard
+      - name: Setup Godot
         uses: chickensoft-games/setup-godot@v2
         with:
           version: 4.5.1
@@ -22,8 +22,7 @@ jobs:
           include-templates: true
 
       - name: Check Godot
-        run: |
-          godot --version
+        run: godot --version
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -31,7 +30,7 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Android
+      - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
       - name: Install Android SDK
@@ -39,6 +38,20 @@ jobs:
           sdkmanager "platform-tools"
           sdkmanager "platforms;android-35"
           sdkmanager "build-tools;35.0.1"
+
+      - name: Create Godot editor settings
+        run: |
+          mkdir -p "$HOME/.config/godot"
+
+          cat > "$HOME/.config/godot/editor_settings-4.tres" <<EOF
+          [gd_resource format=3]
+
+          [resource]
+
+          filesystem/file_dialog/refresh_on_popup=true
+          android/android_sdk_path="/usr/local/lib/android/sdk"
+          android/java_sdk_path="$JAVA_HOME"
+          EOF
 
       - name: Import project
         run: |
