@@ -22,26 +22,22 @@ jobs:
           use-dotnet: false
           include-templates: true
 
-      - name: Check Godot
-        run: |
-          godot --version
-
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Android SDK
+      - name: Setup Android
         uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK
+      - name: Install Android tools
         run: |
           sdkmanager "platform-tools"
           sdkmanager "platforms;android-35"
           sdkmanager "build-tools;35.0.1"
 
-      - name: Configure Godot Android SDK
+      - name: Configure Godot
         run: |
           mkdir -p "$HOME/.config/godot"
 
@@ -50,11 +46,22 @@ jobs:
 
           [resource]
 
-          android/android_sdk_path="/usr/local/lib/android/sdk"
-          android/java_sdk_path="$JAVA_HOME"
+          export/android/android_sdk_path="/usr/local/lib/android/sdk"
+          export/android/java_sdk_path="$JAVA_HOME"
           EOF
 
-      - name: Create Android export preset
+      - name: Verify project
+        run: |
+          echo "===== GODOT ====="
+          godot --version
+
+          echo "===== PROJECT ====="
+          cat project.godot
+
+          echo "===== FILES ====="
+          ls -la
+
+      - name: Create Android preset
         run: |
           cat > export_presets.cfg <<'EOF'
           [preset.0]
@@ -72,10 +79,8 @@ jobs:
           patch_list=[]
           encryption_include_filters=""
           encryption_exclude_filters=""
-          seed=0
           encrypt_pck=false
           encrypt_directory=false
-          script_export_mode=1
 
           [preset.0.options]
 
@@ -83,9 +88,6 @@ jobs:
           custom_template/release=""
 
           gradle_build/use_gradle_build=false
-          gradle_build/export_format=0
-          gradle_build/min_sdk=""
-          gradle_build/target_sdk=""
 
           architectures/armeabi-v7a=false
           architectures/arm64-v8a=true
@@ -98,32 +100,17 @@ jobs:
           package/unique_name="com.busmatch.game"
           package/name="Bus Match"
           package/signed=false
-
-          package/app_category=2
-          package/retain_data_on_uninstall=false
-          package/exclude_from_recents=false
-          package/show_in_android_tv=false
-          package/show_in_app_library=true
-          package/show_as_launcher_app=true
-
-          launcher_icons/main_192x192=""
-          launcher_icons/adaptive_foreground_432x432=""
-          launcher_icons/adaptive_background_432x432=""
           EOF
 
-      - name: Show project
+      - name: Validate export preset
         run: |
-          echo "===== PROJECT FILES ====="
-          find . -maxdepth 2 -type f | sort
-
-          echo "===== EXPORT PRESET ====="
+          echo "===== PRESET ====="
           cat export_presets.cfg
 
-      - name: Import Godot project
-        run: |
-          godot --headless --editor --quit
+          echo "===== GODOT EXPORT HELP ====="
+          godot --headless --help | grep export || true
 
-      - name: Build Android APK
+      - name: Build APK
         run: |
           mkdir -p build
 
@@ -136,17 +123,8 @@ jobs:
 
       - name: Verify APK
         run: |
-          echo "===== APK RESULT ====="
           ls -lah build
-
-          if [ ! -f "build/BusMatch.apk" ]; then
-            echo "ERROR: BusMatch.apk was not created."
-            exit 1
-          fi
-
-          echo "================================"
-          echo "APK BUILD SUCCESSFUL!"
-          echo "================================"
+          test -f build/BusMatch.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
