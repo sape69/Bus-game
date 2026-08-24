@@ -40,20 +40,12 @@ jobs:
           sdkmanager "platforms;android-35"
           sdkmanager "build-tools;35.0.1"
 
-      - name: Configure Godot Android SDK
+      - name: Configure Android environment
         run: |
-          mkdir -p "$HOME/.config/godot"
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "JAVA_HOME=$JAVA_HOME"
 
-          cat > "$HOME/.config/godot/editor_settings-4.tres" <<EOF
-          [gd_resource format=3]
-
-          [resource]
-
-          android/android_sdk_path="/usr/local/lib/android/sdk"
-          android/java_sdk_path="$JAVA_HOME"
-          EOF
-
-      - name: Create Android export preset
+      - name: Create export preset
         run: |
           cat > export_presets.cfg <<'EOF'
           [preset.0]
@@ -79,8 +71,6 @@ jobs:
           custom_template/debug=""
           custom_template/release=""
 
-          gradle_build/use_gradle_build=false
-
           architectures/armeabi-v7a=false
           architectures/arm64-v8a=true
           architectures/x86=false
@@ -94,8 +84,11 @@ jobs:
           version/name="1.0"
           EOF
 
-      - name: Show export preset
+      - name: Show project files
         run: |
+          echo "===== PROJECT FILES ====="
+          find . -maxdepth 2 -type f | sort
+
           echo "===== EXPORT PRESET ====="
           cat export_presets.cfg
 
@@ -103,7 +96,7 @@ jobs:
         run: |
           godot --headless --editor --quit
 
-      - name: Build APK
+      - name: Build Android APK
         run: |
           mkdir -p build
 
@@ -114,17 +107,14 @@ jobs:
             "Android" \
             build/BusMatch.apk
 
-      - name: Check APK
+      - name: Verify APK
         run: |
-          echo "===== BUILD DIRECTORY ====="
+          echo "===== BUILD RESULT ====="
           ls -lah build
 
-          if [ ! -f build/BusMatch.apk ]; then
-            echo "ERROR: APK was not created."
-            exit 1
-          fi
+          test -f build/BusMatch.apk
 
-          echo "APK successfully created!"
+          echo "APK BUILD SUCCESSFUL!"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
