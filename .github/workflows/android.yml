@@ -24,14 +24,14 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK
+      - name: Install Android SDK 35
         run: |
           yes | sdkmanager --licenses || true
 
           sdkmanager \
             "platform-tools" \
-            "platforms;android-36" \
-            "build-tools;36.0.0"
+            "platforms;android-35" \
+            "build-tools;35.0.1"
 
       - name: Setup Godot 4.5.1
         uses: chickensoft-games/setup-godot@v2
@@ -44,73 +44,150 @@ jobs:
         run: |
           godot --version
 
-      - name: Create Android export preset
+      - name: Create export_presets.cfg
         run: |
-          curl -L \
-            "https://raw.githubusercontent.com/Safwan-Murad/Stellar-Highway/master/export_presets.cfg" \
-            -o export_presets.cfg
+          cat > export_presets.cfg <<'EOF'
+          [preset.0]
 
-      - name: Configure Bus Match Android preset
+          name="Android"
+          platform="Android"
+          runnable=true
+          advanced_options=false
+          dedicated_server=false
+          custom_features=""
+          export_filter="all_resources"
+          include_filter=""
+          exclude_filter=""
+          export_path="build/BusMatch.apk"
+          patches=PackedStringArray()
+          encryption_include_filters=""
+          encryption_exclude_filters=""
+          seed=0
+          encrypt_pck=false
+          encrypt_directory=false
+          script_export_mode=2
+
+          [preset.0.options]
+
+          custom_template/debug=""
+          custom_template/release=""
+
+          gradle_build/use_gradle_build=false
+          gradle_build/gradle_build_directory=""
+          gradle_build/android_source_template=""
+          gradle_build/compress_native_libraries=false
+          gradle_build/export_format=0
+          gradle_build/min_sdk=""
+          gradle_build/target_sdk=""
+          gradle_build/custom_theme_attributes={}
+
+          architectures/armeabi-v7a=false
+          architectures/arm64-v8a=true
+          architectures/x86=false
+          architectures/x86_64=false
+
+          version/code=1
+          version/name="1.0"
+
+          package/unique_name="com.busmatch.game"
+          package/name="Bus Match"
+          package/signed=false
+          package/app_category=2
+          package/retain_data_on_uninstall=false
+          package/exclude_from_recents=false
+          package/show_in_android_tv=false
+          package/show_in_app_library=true
+          package/show_as_launcher_app=false
+
+          launcher_icons/main_192x192=""
+          launcher_icons/adaptive_foreground_432x432=""
+          launcher_icons/adaptive_background_432x432=""
+          launcher_icons/adaptive_monochrome_432x432=""
+
+          graphics/opengl_debug=false
+
+          shader_baker/enabled=false
+
+          xr_features/xr_mode=0
+
+          gesture/swipe_to_dismiss=false
+
+          screen/immersive_mode=true
+          screen/edge_to_edge=false
+          screen/support_small=true
+          screen/support_normal=true
+          screen/support_large=true
+          screen/support_xlarge=true
+          screen/background_color=Color(0, 0, 0, 1)
+
+          user_data_backup/allow=false
+
+          command_line/extra_args=""
+
+          apk_expansion/enable=false
+          apk_expansion/SALT=""
+          apk_expansion/public_key=""
+
+          permissions/custom_permissions=PackedStringArray()
+
+          permissions/access_checkin_properties=false
+          permissions/access_coarse_location=false
+          permissions/access_fine_location=false
+          permissions/access_location_extra_commands=false
+          permissions/access_media_location=false
+          permissions/access_surface_flinger=false
+          permissions/access_wifi_state=false
+          permissions/account_manager=false
+          permissions/add_voicemail=false
+          permissions/battery_stats=false
+          permissions/bind_accessibility_service=false
+          permissions/call_phone=false
+          permissions/camera=false
+          permissions/change_component_enabled_state=false
+          permissions/change_network_state=false
+          permissions/change_wifi_state=false
+          permissions/clear_app_cache=false
+          permissions/clear_app_user_data=false
+          permissions/flashlight=false
+          permissions/foreground_service=false
+          permissions/get_accounts=false
+          permissions/get_package_size=false
+          permissions/get_tasks=false
+          permissions/internet=false
+          permissions/location_hardware=false
+          permissions/manage_external_storage=false
+          permissions/modify_audio_settings=false
+          permissions/modify_phone_state=false
+          permissions/mount_unmount_filesystems=false
+          permissions/nfc=false
+          permissions/read_call_log=false
+          permissions/read_contacts=false
+          permissions/read_external_storage=false
+          permissions/read_phone_state=false
+          permissions/read_sms=false
+          permissions/receive_boot_completed=false
+          permissions/receive_mms=false
+          permissions/receive_sms=false
+          permissions/record_audio=false
+          permissions/request_delete_packages=false
+          permissions/request_install_packages=false
+          permissions/send_sms=false
+          permissions/set_alarm=false
+          permissions/set_wallpaper=false
+          permissions/use_credentials=false
+          permissions/use_full_screen_intent=false
+          permissions/use_sip=false
+          permissions/vibrate=true
+          permissions/wake_lock=false
+          permissions/write_call_log=false
+          permissions/write_contacts=false
+          permissions/write_external_storage=false
+          permissions/write_settings=false
+          EOF
+
+      - name: Verify export preset
         run: |
-          python3 <<'PY'
-          from pathlib import Path
-
-          path = Path("export_presets.cfg")
-          text = path.read_text()
-
-          # Use only the first Android preset.
-          start = text.index("[preset.0]")
-          end = text.index("[preset.1]")
-
-          preset = text[start:end]
-
-          # Change output to our APK.
-          lines = []
-
-          for line in preset.splitlines():
-              if line.startswith("export_path="):
-                  line = 'export_path="build/BusMatch.apk"'
-
-              elif line.startswith("gradle_build/use_gradle_build="):
-                  line = "gradle_build/use_gradle_build=false"
-
-              elif line.startswith("gradle_build/export_format="):
-                  line = "gradle_build/export_format=0"
-
-              elif line.startswith("package/unique_name="):
-                  line = 'package/unique_name="com.busmatch.game"'
-
-              elif line.startswith("package/name="):
-                  line = 'package/name="Bus Match"'
-
-              elif line.startswith("package/signed="):
-                  line = "package/signed=false"
-
-              elif line.startswith("version/code="):
-                  line = "version/code=1"
-
-              elif line.startswith("version/name="):
-                  line = 'version/name="1.0"'
-
-              elif line.startswith("launcher_icons/main_192x192="):
-                  line = 'launcher_icons/main_192x192=""'
-
-              lines.append(line)
-
-          preset = "\n".join(lines)
-
-          final_text = (
-              '[runnable_presets]\n'
-              'Android="Android"\n\n'
-              + preset
-          )
-
-          path.write_text(final_text)
-          PY
-
-      - name: Show Android preset
-        run: |
-          echo "===== export_presets.cfg ====="
+          echo "===== EXPORT PRESET ====="
           cat export_presets.cfg
 
       - name: Import Godot project
@@ -137,10 +214,7 @@ jobs:
           echo "===== BUILD RESULT ====="
           ls -lah build
 
-          if [ ! -f "build/BusMatch.apk" ]; then
-            echo "ERROR: BusMatch.apk was not created."
-            exit 1
-          fi
+          test -f build/BusMatch.apk
 
           echo "======================================"
           echo "BUS MATCH APK BUILD SUCCESSFUL!"
