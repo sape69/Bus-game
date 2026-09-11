@@ -24,7 +24,7 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK
+      - name: Install Android SDK 35
         run: |
           yes | sdkmanager --licenses || true
 
@@ -40,9 +40,39 @@ jobs:
           use-dotnet: false
           include-templates: true
 
+      - name: Configure Godot Android settings
+        run: |
+          mkdir -p ~/.config/godot
+
+          cat > ~/.config/godot/editor_settings-4.tres <<EOF
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+
+          export/android/android_sdk_path = "$ANDROID_HOME"
+          export/android/java_sdk_path = "$JAVA_HOME"
+          export/android/shutdown_adb_on_exit = true
+          EOF
+
+          echo "===== GODOT EDITOR SETTINGS ====="
+          cat ~/.config/godot/editor_settings-4.tres
+
       - name: Check Godot
         run: |
           godot --version
+
+      - name: Check Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "JAVA_HOME=$JAVA_HOME"
+
+          test -d "$ANDROID_HOME/platform-tools"
+          test -d "$ANDROID_HOME/platforms/android-35"
+          test -d "$ANDROID_HOME/build-tools/35.0.1"
+
+          test -f "$ANDROID_HOME/platform-tools/adb"
+
+          echo "Android SDK OK"
 
       - name: Create Android export preset
         run: |
@@ -65,7 +95,7 @@ jobs:
           seed=0
           encrypt_pck=false
           encrypt_directory=false
-          script_export_mode=0
+          script_export_mode=2
 
           [preset.0.options]
 
@@ -134,7 +164,6 @@ jobs:
           permissions/access_coarse_location=false
           permissions/access_fine_location=false
           permissions/access_location_extra_commands=false
-          permissions/access_media_location=false
           permissions/access_surface_flinger=false
           permissions/access_wifi_state=false
           permissions/account_manager=false
@@ -185,22 +214,7 @@ jobs:
           permissions/write_settings=false
           EOF
 
-      - name: Show export preset
-        run: |
-          echo "========== export_presets.cfg =========="
-          cat export_presets.cfg
-          echo "========================================="
-
-      - name: Check Android SDK
-        run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-
-          test -d "$ANDROID_HOME/platform-tools"
-          test -d "$ANDROID_HOME/platforms/android-35"
-          test -d "$ANDROID_HOME/build-tools/35.0.1"
-
-      - name: Check Godot project
+      - name: Import Godot project
         run: |
           godot \
             --headless \
@@ -208,28 +222,13 @@ jobs:
             --editor \
             --quit
 
-      - name: Check export preset
-        run: |
-          godot \
-            --headless \
-            --path . \
-            --export-debug \
-            "Android" \
-            /tmp/test_bus_match.apk \
-            2>&1 | tee /tmp/export_test.log
-
-          if grep -q "Cannot export project with preset" /tmp/export_test.log; then
-            echo "===== EXPORT PRESET ERROR ====="
-            cat /tmp/export_test.log
-            exit 1
-          fi
-
-      - name: Build Android APK
+      - name: Export Android APK
         run: |
           mkdir -p build
 
           godot \
             --headless \
+            --verbose \
             --path . \
             --export-debug \
             "Android" \
@@ -242,6 +241,7 @@ jobs:
 
           test -f build/BusMatch.apk
 
+          echo ""
           echo "======================================"
           echo "BUS MATCH APK BUILD SUCCESSFUL!"
           echo "======================================"
