@@ -22,46 +22,33 @@ jobs:
           use-dotnet: false
           include-templates: true
 
+      - name: Check Godot
+        run: |
+          godot --version
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Android
+      - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android tools
+      - name: Install Android SDK
         run: |
+          yes | sdkmanager --licenses || true
           sdkmanager "platform-tools"
           sdkmanager "platforms;android-35"
           sdkmanager "build-tools;35.0.1"
 
-      - name: Configure Godot
+      - name: Configure Android environment
         run: |
-          mkdir -p "$HOME/.config/godot"
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          echo "JAVA_HOME=$JAVA_HOME"
 
-          cat > "$HOME/.config/godot/editor_settings-4.tres" <<EOF
-          [gd_resource format=3]
-
-          [resource]
-
-          export/android/android_sdk_path="/usr/local/lib/android/sdk"
-          export/android/java_sdk_path="$JAVA_HOME"
-          EOF
-
-      - name: Verify project
-        run: |
-          echo "===== GODOT ====="
-          godot --version
-
-          echo "===== PROJECT ====="
-          cat project.godot
-
-          echo "===== FILES ====="
-          ls -la
-
-      - name: Create Android preset
+      - name: Create Android export preset
         run: |
           cat > export_presets.cfg <<'EOF'
           [preset.0]
@@ -87,8 +74,6 @@ jobs:
           custom_template/debug=""
           custom_template/release=""
 
-          gradle_build/use_gradle_build=false
-
           architectures/armeabi-v7a=false
           architectures/arm64-v8a=true
           architectures/x86=false
@@ -102,15 +87,22 @@ jobs:
           package/signed=false
           EOF
 
-      - name: Validate export preset
+      - name: Check project files
         run: |
-          echo "===== PRESET ====="
+          echo "===== PROJECT FILES ====="
+          ls -la
+
+          echo "===== PROJECT.GODOT ====="
+          cat project.godot
+
+          echo "===== EXPORT PRESETS ====="
           cat export_presets.cfg
 
-          echo "===== GODOT EXPORT HELP ====="
-          godot --headless --help | grep export || true
+      - name: Import project
+        run: |
+          godot --headless --path . --editor --quit
 
-      - name: Build APK
+      - name: Build Android APK
         run: |
           mkdir -p build
 
@@ -123,8 +115,15 @@ jobs:
 
       - name: Verify APK
         run: |
+          echo "===== BUILD RESULT ====="
           ls -lah build
-          test -f build/BusMatch.apk
+
+          if [ ! -f build/BusMatch.apk ]; then
+            echo "ERROR: APK was not created."
+            exit 1
+          fi
+
+          echo "APK BUILD SUCCESSFUL!"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
