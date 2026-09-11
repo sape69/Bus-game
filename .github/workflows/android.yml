@@ -12,14 +12,28 @@ jobs:
 
     steps:
 
+      # ==========================================
+      # CHECKOUT
+      # ==========================================
+
       - name: Checkout
         uses: actions/checkout@v4
+
+
+      # ==========================================
+      # JAVA 17
+      # ==========================================
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
+
+
+      # ==========================================
+      # ANDROID SDK
+      # ==========================================
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -33,12 +47,26 @@ jobs:
             "platforms;android-35" \
             "build-tools;35.0.1"
 
+
+      # ==========================================
+      # GODOT 4.5.1
+      # ==========================================
+
       - name: Setup Godot 4.5.1
         uses: chickensoft-games/setup-godot@v2
         with:
           version: 4.5.1
           use-dotnet: false
           include-templates: true
+
+      - name: Check Godot
+        run: |
+          godot --version
+
+
+      # ==========================================
+      # GODOT ANDROID SETTINGS
+      # ==========================================
 
       - name: Configure Godot Android settings
         run: |
@@ -57,9 +85,47 @@ jobs:
           echo "===== GODOT EDITOR SETTINGS ====="
           cat ~/.config/godot/editor_settings-4.tres
 
-      - name: Check Godot
+
+      # ==========================================
+      # CREATE DEBUG KEYSTORE
+      # ==========================================
+
+      - name: Create Android debug keystore
         run: |
-          godot --version
+          mkdir -p "$HOME/.android"
+
+          keytool \
+            -genkeypair \
+            -v \
+            -keystore "$HOME/.android/debug.keystore" \
+            -storepass android \
+            -alias androiddebugkey \
+            -keypass android \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+
+          echo "===== DEBUG KEYSTORE ====="
+          ls -lh "$HOME/.android/debug.keystore"
+
+
+      # ==========================================
+      # SET GODOT KEYSTORE VARIABLES
+      # ==========================================
+
+      - name: Configure Android signing
+        run: |
+          echo "GODOT_ANDROID_KEYSTORE_DEBUG_PATH=$HOME/.android/debug.keystore" >> "$GITHUB_ENV"
+          echo "GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey" >> "$GITHUB_ENV"
+          echo "GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=android" >> "$GITHUB_ENV"
+
+          echo "Android debug signing configured."
+
+
+      # ==========================================
+      # CHECK ANDROID SDK
+      # ==========================================
 
       - name: Check Android SDK
         run: |
@@ -69,10 +135,14 @@ jobs:
           test -d "$ANDROID_HOME/platform-tools"
           test -d "$ANDROID_HOME/platforms/android-35"
           test -d "$ANDROID_HOME/build-tools/35.0.1"
-
           test -f "$ANDROID_HOME/platform-tools/adb"
 
           echo "Android SDK OK"
+
+
+      # ==========================================
+      # CREATE EXPORT PRESET
+      # ==========================================
 
       - name: Create Android export preset
         run: |
@@ -95,7 +165,7 @@ jobs:
           seed=0
           encrypt_pck=false
           encrypt_directory=false
-          script_export_mode=2
+          script_export_mode=0
 
           [preset.0.options]
 
@@ -121,7 +191,7 @@ jobs:
 
           package/unique_name="com.busmatch.game"
           package/name="Bus Match"
-          package/signed=false
+          package/signed=true
           package/app_category=2
           package/retain_data_on_uninstall=false
           package/exclude_from_recents=false
@@ -214,6 +284,11 @@ jobs:
           permissions/write_settings=false
           EOF
 
+
+      # ==========================================
+      # IMPORT PROJECT
+      # ==========================================
+
       - name: Import Godot project
         run: |
           godot \
@@ -222,7 +297,12 @@ jobs:
             --editor \
             --quit
 
-      - name: Export Android APK
+
+      # ==========================================
+      # BUILD APK
+      # ==========================================
+
+      - name: Build Android APK
         run: |
           mkdir -p build
 
@@ -233,6 +313,11 @@ jobs:
             --export-debug \
             "Android" \
             build/BusMatch.apk
+
+
+      # ==========================================
+      # VERIFY APK
+      # ==========================================
 
       - name: Verify APK
         run: |
@@ -245,6 +330,11 @@ jobs:
           echo "======================================"
           echo "BUS MATCH APK BUILD SUCCESSFUL!"
           echo "======================================"
+
+
+      # ==========================================
+      # UPLOAD APK
+      # ==========================================
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
