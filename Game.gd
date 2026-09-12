@@ -769,4 +769,338 @@ func _draw():
 				GRID_X +
 				x * CELL_SIZE,
 
-			
+				GRID_Y +
+				y * CELL_SIZE,
+
+				CELL_SIZE - 4,
+				CELL_SIZE - 4
+			)
+
+
+			draw_rect(
+				rect,
+				grid_color,
+				true
+			)
+
+
+			draw_rect(
+				rect,
+				grid_border,
+				false,
+				2
+			)
+
+
+	# --------------------------------------
+	# PASSENGERS
+	# --------------------------------------
+
+	for i in range(passengers.size()):
+
+		var passenger = passengers[i]
+
+		if not passenger.active:
+			continue
+
+
+		var center: Vector2 = passenger.position
+
+		var passenger_color: Color = colors[
+			passenger.color
+		]
+
+
+		# Valinnan halo
+
+		if i == selected_passenger:
+
+			draw_circle(
+				center,
+				29,
+				Color("#ffffff")
+			)
+
+			draw_arc(
+				center,
+				31,
+				0,
+				TAU,
+				32,
+				passenger_color,
+				4
+			)
+
+
+		# Keho
+
+		draw_circle(
+			center,
+			22,
+			passenger_color
+		)
+
+
+		# Pää
+
+		draw_circle(
+			center +
+			Vector2(
+				0,
+				-8
+			),
+			7,
+			white
+		)
+
+
+		# Silmät
+
+		draw_circle(
+			center +
+			Vector2(
+				-3,
+				-9
+			),
+			1.5,
+			dark
+		)
+
+
+		draw_circle(
+			center +
+			Vector2(
+				3,
+				-9
+			),
+			1.5,
+			dark
+		)
+
+
+	# --------------------------------------
+	# BUSSIT
+	# --------------------------------------
+
+	for i in range(buses.size()):
+
+		if not buses[i].active:
+			continue
+
+		draw_bus(i)
+
+
+	# --------------------------------------
+	# BUSSIT TEKSTI
+	# --------------------------------------
+
+	draw_string(
+		ThemeDB.fallback_font,
+		Vector2(
+			20,
+			650
+		),
+		"BUSSIT",
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1,
+		16,
+		Color("#90a4ae")
+	)
+
+
+# ==========================================
+# DRAW BUS
+# ==========================================
+
+func draw_bus(
+	index: int
+):
+
+	if index < 0:
+		return
+
+	if index >= buses.size():
+		return
+
+
+	var bus = buses[index]
+
+	var rect := get_bus_rect(
+		index
+	)
+
+	var bus_color: Color = colors[
+		bus.color
+	]
+
+
+	# --------------------------------------
+	# VARJO
+	# --------------------------------------
+
+	draw_rect(
+		Rect2(
+			rect.position +
+			Vector2(
+				0,
+				5
+			),
+			rect.size
+		),
+		Color("#080c0e"),
+		true
+	)
+
+
+	# --------------------------------------
+	# RUNKO
+	# --------------------------------------
+
+	draw_rect(
+		rect,
+		bus_color,
+		true
+	)
+
+
+	# --------------------------------------
+	# YLÄREUNA
+	# --------------------------------------
+
+	draw_rect(
+		Rect2(
+			rect.position,
+			Vector2(
+				rect.size.x,
+				8
+			)
+		),
+		Color(
+			bus_color.r * 0.75,
+			bus_color.g * 0.75,
+			bus_color.b * 0.75
+		),
+		true
+	)
+
+
+	# --------------------------------------
+	# IKKUNAT
+	# --------------------------------------
+
+	draw_rect(
+		Rect2(
+			rect.position +
+			Vector2(
+				8,
+				14
+			),
+			Vector2(
+				84,
+				22
+			)
+		),
+		Color("#263238"),
+		true
+	)
+
+
+	# --------------------------------------
+	# OVI
+	# --------------------------------------
+
+	draw_rect(
+		Rect2(
+			rect.position +
+			Vector2(
+				76,
+				42
+			),
+			Vector2(
+				14,
+				22
+			)
+		),
+		Color("#37474f"),
+		true
+	)
+
+
+	# --------------------------------------
+	# PYÖRÄT
+	# --------------------------------------
+
+	draw_circle(
+		Vector2(
+			rect.position.x + 20,
+			rect.position.y + rect.size.y
+		),
+		9,
+		dark
+	)
+
+
+	draw_circle(
+		Vector2(
+			rect.position.x + 80,
+			rect.position.y + rect.size.y
+		),
+		9,
+		dark
+	)
+
+
+	# --------------------------------------
+	# MATKUSTAJAT BUSSISSA
+	# --------------------------------------
+
+	for passenger_index in range(
+		bus.passengers.size()
+	):
+
+		var passenger_color: Color = colors[
+			bus.passengers[
+				passenger_index
+			]
+		]
+
+
+		var passenger_pos := Vector2(
+			rect.position.x +
+			20 +
+			passenger_index * 22,
+
+			rect.position.y +
+			25
+		)
+
+
+		draw_circle(
+			passenger_pos,
+			7,
+			passenger_color
+		)
+
+
+	# --------------------------------------
+	# TÄYTTÖMÄÄRÄ
+	# --------------------------------------
+
+	draw_string(
+		ThemeDB.fallback_font,
+
+		Vector2(
+			rect.position.x + 34,
+			rect.position.y + 58
+		),
+
+		"%d/%d" % [
+			bus.filled,
+			bus.capacity
+		],
+
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1,
+		14,
+		white
+	)
