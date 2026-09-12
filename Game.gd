@@ -23,10 +23,10 @@ const PASSENGER_RADIUS := 22.0
 const MOVE_TIME := 0.35
 
 var colors := [
-	Color("#ef5350"), # punainen
-	Color("#42a5f5"), # sininen
-	Color("#66bb6a"), # vihreä
-	Color("#ffca28")  # keltainen
+        Color("#ef5350"), # punainen
+        Color("#42a5f5"), # sininen
+        Color("#66bb6a"), # vihreä
+        Color("#ffca28")  # keltainen
 ]
 
 var dark_background := Color("#101820")
@@ -59,11 +59,11 @@ var restart_button: Button
 
 func _ready():
 
-	create_ui()
+        create_ui()
 
-	create_level()
+        create_level()
 
-	queue_redraw()
+        queue_redraw()
 
 
 # ==========================================
@@ -72,92 +72,92 @@ func _ready():
 
 func create_ui():
 
-	title_label = Label.new()
+        title_label = Label.new()
 
-	title_label.text = "🚌 BUS MATCH"
+        title_label.text = "🚌 BUS MATCH"
 
-	title_label.position = Vector2(
-		20,
-		15
-	)
+        title_label.position = Vector2(
+                20,
+                15
+        )
 
-	title_label.add_theme_font_size_override(
-		"font_size",
-		30
-	)
+        title_label.add_theme_font_size_override(
+                "font_size",
+                30
+        )
 
-	add_child(title_label)
-
-
-	score_label = Label.new()
-
-	score_label.position = Vector2(
-		20,
-		65
-	)
-
-	score_label.add_theme_font_size_override(
-		"font_size",
-		18
-	)
-
-	add_child(score_label)
+        add_child(title_label)
 
 
-	lives_label = Label.new()
+        score_label = Label.new()
 
-	lives_label.position = Vector2(
-		330,
-		65
-	)
+        score_label.position = Vector2(
+                20,
+                65
+        )
 
-	lives_label.add_theme_font_size_override(
-		"font_size",
-		18
-	)
+        score_label.add_theme_font_size_override(
+                "font_size",
+                18
+        )
 
-	add_child(lives_label)
-
-
-	info_label = Label.new()
-
-	info_label.position = Vector2(
-		20,
-		95
-	)
-
-	info_label.add_theme_font_size_override(
-		"font_size",
-		16
-	)
-
-	add_child(info_label)
+        add_child(score_label)
 
 
-	restart_button = Button.new()
+        lives_label = Label.new()
 
-	restart_button.text = "🔄 UUDELLEEN"
+        lives_label.position = Vector2(
+                330,
+                65
+        )
 
-	restart_button.position = Vector2(
-		145,
-		770
-	)
+        lives_label.add_theme_font_size_override(
+                "font_size",
+                18
+        )
 
-	restart_button.size = Vector2(
-		190,
-		55
-	)
+        add_child(lives_label)
 
-	restart_button.add_theme_font_size_override(
-		"font_size",
-		18
-	)
 
-	restart_button.pressed.connect(
-		restart_game
-	)
+        info_label = Label.new()
 
-	add_child(restart_button)
+        info_label.position = Vector2(
+                20,
+                95
+        )
+
+        info_label.add_theme_font_size_override(
+                "font_size",
+                16
+        )
+
+        add_child(info_label)
+
+
+        restart_button = Button.new()
+
+        restart_button.text = "🔄 UUDELLEEN"
+
+        restart_button.position = Vector2(
+                145,
+                770
+        )
+
+        restart_button.size = Vector2(
+                190,
+                55
+        )
+
+        restart_button.add_theme_font_size_override(
+                "font_size",
+                18
+        )
+
+        restart_button.pressed.connect(
+                restart_game
+        )
+
+        add_child(restart_button)
 
 
 # ==========================================
@@ -166,83 +166,83 @@ func create_ui():
 
 func create_level():
 
-	passengers.clear()
+        passengers.clear()
 
-	buses.clear()
+        buses.clear()
 
-	score = 0
+        score = 0
 
-	lives = 3
+        lives = 3
 
-	selected_passenger = -1
+        selected_passenger = -1
 
-	game_won = false
+        game_won = false
 
-	game_over = false
+        game_over = false
 
-	busy = false
-
-
-	# --------------------------------------
-	# MATKUSTAJAT
-	# --------------------------------------
-
-	var passenger_colors := [
-		0, 0, 0, 0, 0,
-		1, 1, 1, 1, 1,
-		2, 2, 2, 2, 2,
-		3, 3, 3, 3, 3,
-		0, 1, 2, 3, 0
-	]
-
-	passenger_colors.shuffle()
+        busy = false
 
 
-	var index := 0
+        # --------------------------------------
+        # MATKUSTAJAT
+        # --------------------------------------
+
+        var passenger_colors := [
+                0, 0, 0, 0, 0,
+                1, 1, 1, 1, 1,
+                2, 2, 2, 2, 2,
+                3, 3, 3, 3, 3,
+                0, 1, 2, 3, 0
+        ]
+
+        passenger_colors.shuffle()
 
 
-	for y in range(ROWS):
-
-		for x in range(COLS):
-
-			var passenger := {
-				"grid": Vector2i(x, y),
-				"color": passenger_colors[index],
-				"active": true,
-				"moving": false,
-				"position": get_passenger_position(
-					Vector2i(x, y)
-				)
-			}
-
-			passengers.append(
-				passenger
-			)
-
-			index += 1
+        var index := 0
 
 
-	# --------------------------------------
-	# BUSSIT
-	# --------------------------------------
+        for y in range(ROWS):
 
-	for i in range(4):
+                for x in range(COLS):
 
-		var bus := {
-			"color": i,
-			"capacity": 4,
-			"filled": 0,
-			"active": true,
-			"departing": false,
-			"passengers": []
-		}
+                        var passenger := {
+                                "grid": Vector2i(x, y),
+                                "color": passenger_colors[index],
+                                "active": true,
+                                "moving": false,
+                                "position": get_passenger_position(
+                                        Vector2i(x, y)
+                                )
+                        }
 
-		buses.append(bus)
+                        passengers.append(
+                                passenger
+                        )
+
+                        index += 1
 
 
-	update_info()
+        # --------------------------------------
+        # BUSSIT
+        # --------------------------------------
 
-	queue_redraw()
+        for i in range(4):
+
+                var bus := {
+                        "color": i,
+                        "capacity": 4,
+                        "filled": 0,
+                        "active": true,
+                        "departing": false,
+                        "passengers": []
+                }
+
+                buses.append(bus)
+
+
+        update_info()
+
+        queue_redraw()
 
 
 # ==========================================
@@ -250,18 +250,18 @@ func create_level():
 # ==========================================
 
 func get_passenger_position(
-	grid_pos: Vector2i
+        grid_pos: Vector2i
 ) -> Vector2:
 
-	return Vector2(
-		GRID_X +
-		grid_pos.x * CELL_SIZE +
-		CELL_SIZE / 2,
+        return Vector2(
+                GRID_X +
+                grid_pos.x * CELL_SIZE +
+                CELL_SIZE / 2,
 
-		GRID_Y +
-		grid_pos.y * CELL_SIZE +
-		CELL_SIZE / 2
-	)
+                GRID_Y +
+                grid_pos.y * CELL_SIZE +
+                CELL_SIZE / 2
+        )
 
 
 # ==========================================
@@ -270,28 +270,28 @@ func get_passenger_position(
 
 func _input(event):
 
-	if game_won or game_over or busy:
-		return
+        if game_won or game_over or busy:
+                return
 
 
-	if event is InputEventMouseButton:
+        if event is InputEventMouseButton:
 
-		if event.button_index == MOUSE_BUTTON_LEFT:
+                if event.button_index == MOUSE_BUTTON_LEFT:
 
-			if event.pressed:
+                        if event.pressed:
 
-				handle_click(
-					event.position
-				)
+                                handle_click(
+                                        event.position
+                                )
 
 
-	if event is InputEventScreenTouch:
+        if event is InputEventScreenTouch:
 
-		if event.pressed:
+                if event.pressed:
 
-			handle_click(
-				event.position
-			)
+                        handle_click(
+                                event.position
+                        )
 
 
 # ==========================================
@@ -300,52 +300,52 @@ func _input(event):
 
 func handle_click(pos: Vector2):
 
-	# --------------------------------------
-	# MATKUSTAJAT
-	# --------------------------------------
+        # --------------------------------------
+        # MATKUSTAJAT
+        # --------------------------------------
 
-	for i in range(passengers.size()):
+        for i in range(passengers.size()):
 
-		var passenger = passengers[i]
+                var passenger = passengers[i]
 
-		if not passenger.active:
-			continue
+                if not passenger.active:
+                        continue
 
-		if passenger.moving:
-			continue
+                if passenger.moving:
+                        continue
 
-		var center: Vector2 = passenger.position
-
-
-		if pos.distance_to(center) <= PASSENGER_RADIUS + 8:
-
-			select_passenger(i)
-
-			return
+                var center: Vector2 = passenger.position
 
 
-	# --------------------------------------
-	# BUSSIT
-	# --------------------------------------
+                if pos.distance_to(center) <= PASSENGER_RADIUS + 8:
 
-	for i in range(buses.size()):
+                        select_passenger(i)
 
-		if not buses[i].active:
-			continue
-
-		var rect := get_bus_rect(i)
+                        return
 
 
-		if rect.has_point(pos):
+        # --------------------------------------
+        # BUSSIT
+        # --------------------------------------
 
-			if selected_passenger >= 0:
+        for i in range(buses.size()):
 
-				put_passenger_in_bus(
-					selected_passenger,
-					i
-				)
+                if not buses[i].active:
+                        continue
 
-			return
+                var rect := get_bus_rect(i)
+
+
+                if rect.has_point(pos):
+
+                        if selected_passenger >= 0:
+
+                                put_passenger_in_bus(
+                                        selected_passenger,
+                                        i
+                                )
+
+                        return
 
 
 # ==========================================
@@ -354,18 +354,18 @@ func handle_click(pos: Vector2):
 
 func select_passenger(index: int):
 
-	if index < 0:
-		return
+        if index < 0:
+                return
 
-	if index >= passengers.size():
-		return
+        if index >= passengers.size():
+                return
 
 
-	selected_passenger = index
+        selected_passenger = index
 
-	update_info()
+        update_info()
 
-	queue_redraw()
+        queue_redraw()
 
 
 # ==========================================
@@ -373,145 +373,145 @@ func select_passenger(index: int):
 # ==========================================
 
 func put_passenger_in_bus(
-	passenger_index: int,
-	bus_index: int
+        passenger_index: int,
+        bus_index: int
 ):
 
-	if passenger_index < 0:
-		return
+        if passenger_index < 0:
+                return
 
-	if bus_index < 0:
-		return
+        if bus_index < 0:
+                return
 
-	if passenger_index >= passengers.size():
-		return
+        if passenger_index >= passengers.size():
+                return
 
-	if bus_index >= buses.size():
-		return
-
-
-	var passenger = passengers[
-		passenger_index
-	]
-
-	var bus = buses[
-		bus_index
-	]
+        if bus_index >= buses.size():
+                return
 
 
-	# --------------------------------------
-	# VÄÄRÄ BUSSI
-	# --------------------------------------
+        var passenger = passengers[
+                passenger_index
+        ]
 
-	if passenger.color != bus.color:
-
-		lives -= 1
-
-		info_label.text = (
-			"❌ Väärä bussi!"
-		)
-
-		selected_passenger = -1
-
-		update_info()
-
-		queue_redraw()
+        var bus = buses[
+                bus_index
+        ]
 
 
-		if lives <= 0:
+        # --------------------------------------
+        # VÄÄRÄ BUSSI
+        # --------------------------------------
 
-			game_over = true
+        if passenger.color != bus.color:
 
-			info_label.text = (
-				"💥 PELI OHI!"
-			)
+                lives -= 1
 
-			queue_redraw()
+                info_label.text = (
+                        "❌ Väärä bussi!"
+                )
 
-		return
+                selected_passenger = -1
 
+                update_info()
 
-	# --------------------------------------
-	# BUSSI TÄYNNÄ
-	# --------------------------------------
-
-	if bus.filled >= bus.capacity:
-
-		info_label.text = (
-			"🚌 Bussi on täynnä!"
-		)
-
-		return
+                queue_redraw()
 
 
-	# --------------------------------------
-	# OIKEA BUSSI
-	# --------------------------------------
+                if lives <= 0:
 
-	selected_passenger = -1
+                        game_over = true
 
-	busy = true
+                        info_label.text = (
+                                "💥 PELI OHI!"
+                        )
 
-	passenger.moving = true
+                        queue_redraw()
 
-	bus.filled += 1
-
-	bus.passengers.append(
-		passenger.color
-	)
-
-	score += 10
+                return
 
 
-	var target := get_bus_passenger_position(
-		bus_index,
-		bus.filled - 1
-	)
+        # --------------------------------------
+        # BUSSI TÄYNNÄ
+        # --------------------------------------
+
+        if bus.filled >= bus.capacity:
+
+                info_label.text = (
+                        "🚌 Bussi on täynnä!"
+                )
+
+                return
 
 
-	var start := passenger.position
+        # --------------------------------------
+        # OIKEA BUSSI
+        # --------------------------------------
+
+        selected_passenger = -1
+
+        busy = true
+
+        passenger.moving = true
+
+        bus.filled += 1
+
+        bus.passengers.append(
+                passenger.color
+        )
+
+        score += 10
 
 
-	var tween := create_tween()
-
-	tween.set_trans(
-		Tween.TRANS_QUAD
-	)
-
-	tween.set_ease(
-		Tween.EASE_IN_OUT
-	)
+        var target := get_bus_passenger_position(
+                bus_index,
+                bus.filled - 1
+        )
 
 
-	tween.tween_method(
-		func(value: Vector2):
-			passenger.position = value
-			queue_redraw(),
-		start,
-		target,
-		MOVE_TIME
-	)
+        var start := passenger.position
 
 
-	tween.tween_callback(
-		func():
+        var tween := create_tween()
 
-			passenger.active = false
+        tween.set_trans(
+                Tween.TRANS_QUAD
+        )
 
-			passenger.moving = false
+        tween.set_ease(
+                Tween.EASE_IN_OUT
+        )
 
-			busy = false
 
-			check_bus_full(
-				bus_index
-			)
+        tween.tween_method(
+                func(value: Vector2):
+                        passenger.position = value
+                        queue_redraw(),
+                start,
+                target,
+                MOVE_TIME
+        )
 
-			check_win()
 
-			update_info()
+        tween.tween_callback(
+                func():
 
-			queue_redraw()
-	)
+                        passenger.active = false
+
+                        passenger.moving = false
+
+                        busy = false
+
+                        check_bus_full(
+                                bus_index
+                        )
+
+                        check_win()
+
+                        update_info()
+
+                        queue_redraw()
+        )
 
 
 # ==========================================
@@ -519,65 +519,65 @@ func put_passenger_in_bus(
 # ==========================================
 
 func check_bus_full(
-	bus_index: int
+        bus_index: int
 ):
 
-	var bus = buses[
-		bus_index
-	]
+        var bus = buses[
+                bus_index
+        ]
 
 
-	if bus.filled < bus.capacity:
-		return
+        if bus.filled < bus.capacity:
+                return
 
 
-	if bus.departing:
-		return
+        if bus.departing:
+                return
 
 
-	bus.departing = true
+        bus.departing = true
 
-	info_label.text = (
-		"🚌 Bussi lähtee!"
-	)
+        info_label.text = (
+                "🚌 Bussi lähtee!"
+        )
 
-	var start_x := get_bus_x(
-		bus_index
-	)
+        var start_x := get_bus_x(
+                bus_index
+        )
 
-	var tween := create_tween()
+        var tween := create_tween()
 
-	tween.set_trans(
-		Tween.TRANS_QUAD
-	)
+        tween.set_trans(
+                Tween.TRANS_QUAD
+        )
 
-	tween.set_ease(
-		Tween.EASE_IN
-	)
+        tween.set_ease(
+                Tween.EASE_IN
+        )
 
-	tween.tween_method(
-		func(value: float):
+        tween.tween_method(
+                func(value: float):
 
-			bus["offset_x"] = value
+                        bus["offset_x"] = value
 
-			queue_redraw(),
+                        queue_redraw(),
 
-		0.0,
-		520.0,
-		0.7
-	)
+                0.0,
+                520.0,
+                0.7
+        )
 
-	tween.tween_callback(
-		func():
+        tween.tween_callback(
+                func():
 
-			bus.active = false
+                        bus.active = false
 
-			bus.departing = false
+                        bus.departing = false
 
-			bus["offset_x"] = 0.0
+                        bus["offset_x"] = 0.0
 
-			queue_redraw()
-	)
+                        queue_redraw()
+        )
 
 
 # ==========================================
@@ -585,33 +585,33 @@ func check_bus_full(
 # ==========================================
 
 func get_bus_x(
-	index: int
+        index: int
 ) -> float:
 
-	return 15.0 + index * (
-		BUS_WIDTH + BUS_GAP
-	)
+        return 15.0 + index * (
+                BUS_WIDTH + BUS_GAP
+        )
 
 
 func get_bus_rect(
-	index: int
+        index: int
 ) -> Rect2:
 
-	var x := get_bus_x(index)
+        var x := get_bus_x(index)
 
-	if buses.size() > index:
+        if buses.size() > index:
 
-		if buses[index].has("offset_x"):
+                if buses[index].has("offset_x"):
 
-			x += buses[index].offset_x
+                        x += buses[index].offset_x
 
 
-	return Rect2(
-		x,
-		BUS_Y,
-		BUS_WIDTH,
-		BUS_HEIGHT
-	)
+        return Rect2(
+                x,
+                BUS_Y,
+                BUS_WIDTH,
+                BUS_HEIGHT
+        )
 
 
 # ==========================================
@@ -619,24 +619,24 @@ func get_bus_rect(
 # ==========================================
 
 func get_bus_passenger_position(
-	bus_index: int,
-	passenger_index: int
+        bus_index: int,
+        passenger_index: int
 ) -> Vector2:
 
-	var rect := get_bus_rect(
-		bus_index
-	)
+        var rect := get_bus_rect(
+                bus_index
+        )
 
-	var spacing := 22.0
+        var spacing := 22.0
 
-	var start_x := rect.position.x + 20
+        var start_x := rect.position.x + 20
 
-	return Vector2(
-		start_x +
-		passenger_index * spacing,
+        return Vector2(
+                start_x +
+                passenger_index * spacing,
 
-		rect.position.y + 30
-	)
+                rect.position.y + 30
+        )
 
 
 # ==========================================
@@ -645,22 +645,22 @@ func get_bus_passenger_position(
 
 func check_win():
 
-	for passenger in passengers:
+        for passenger in passengers:
 
-		if passenger.active:
+                if passenger.active:
 
-			return
+                        return
 
 
-	game_won = true
+        game_won = true
 
-	busy = false
+        busy = false
 
-	info_label.text = (
-		"🎉 TASO SUORITETTU!"
-	)
+        info_label.text = (
+                "🎉 TASO SUORITETTU!"
+        )
 
-	queue_redraw()
+        queue_redraw()
 
 
 # ==========================================
@@ -669,9 +669,9 @@ func check_win():
 
 func restart_game():
 
-	create_level()
+        create_level()
 
-	queue_redraw()
+        queue_redraw()
 
 
 # ==========================================
@@ -680,67 +680,67 @@ func restart_game():
 
 func update_info():
 
-	score_label.text = (
-		"⭐ Pisteet: %d" % score
-	)
+        score_label.text = (
+                "⭐ Pisteet: %d" % score
+        )
 
 
-	lives_label.text = (
-		"❤️ Elämät: %d" % lives
-	)
+        lives_label.text = (
+                "❤️ Elämät: %d" % lives
+        )
 
 
-	if game_won:
+        if game_won:
 
-		info_label.text = (
-			"🎉 VOITIT! Pisteet: %d"
-			% score
-		)
+                info_label.text = (
+                        "🎉 VOITIT! Pisteet: %d"
+                        % score
+                )
 
-		return
-
-
-	if game_over:
-
-		info_label.text = (
-			"💥 PELI OHI!"
-		)
-
-		return
+                return
 
 
-	var remaining := 0
+        if game_over:
+
+                info_label.text = (
+                        "💥 PELI OHI!"
+                )
+
+                return
 
 
-	for passenger in passengers:
-
-		if passenger.active:
-
-			remaining += 1
+        var remaining := 0
 
 
-	if selected_passenger >= 0:
+        for passenger in passengers:
 
-		var color_index = passengers[
-			selected_passenger
-		].color
+                if passenger.active:
 
-		info_label.text = (
-			"Valittu: %s | Jäljellä: %d"
-			% [
-				get_color_name(
-					color_index
-				),
-				remaining
-			]
-		)
+                        remaining += 1
 
-	else:
 
-		info_label.text = (
-			"Valitse matkustaja | Jäljellä: %d"
-			% remaining
-		)
+        if selected_passenger >= 0:
+
+                var color_index = passengers[
+                        selected_passenger
+                ].color
+
+                info_label.text = (
+                        "Valittu: %s | Jäljellä: %d"
+                        % [
+                                get_color_name(
+                                        color_index
+                                ),
+                                remaining
+                        ]
+                )
+
+        else:
+
+                info_label.text = (
+                        "Valitse matkustaja | Jäljellä: %d"
+                        % remaining
+                )
 
 
 # ==========================================
@@ -748,25 +748,25 @@ func update_info():
 # ==========================================
 
 func get_color_name(
-	index: int
+        index: int
 ) -> String:
 
-	match index:
+        match index:
 
-		0:
-			return "PUNAINEN"
+                0:
+                        return "PUNAINEN"
 
-		1:
-			return "SININEN"
+                1:
+                        return "SININEN"
 
-		2:
-			return "VIHREÄ"
+                2:
+                        return "VIHREÄ"
 
-		3:
-			return "KELTAINEN"
+                3:
+                        return "KELTAINEN"
 
 
-	return ""
+        return ""
 
 
 # ==========================================
@@ -775,186 +775,186 @@ func get_color_name(
 
 func _draw():
 
-	# --------------------------------------
-	# TAUSTA
-	# --------------------------------------
+        # --------------------------------------
+        # TAUSTA
+        # --------------------------------------
 
-	draw_rect(
-		Rect2(
-			0,
-			0,
-			480,
-			850
-		),
-		dark_background
-	)
-
-
-	# --------------------------------------
-	# OTSIKON ALUE
-	# --------------------------------------
-
-	draw_rect(
-		Rect2(
-			0,
-			0,
-			480,
-			110
-		),
-		Color("#162329")
-	)
+        draw_rect(
+                Rect2(
+                        0,
+                        0,
+                        480,
+                        850
+                ),
+                dark_background
+        )
 
 
-	# --------------------------------------
-	# GRID
-	# --------------------------------------
+        # --------------------------------------
+        # OTSIKON ALUE
+        # --------------------------------------
 
-	for y in range(ROWS):
-
-		for x in range(COLS):
-
-			var rect := Rect2(
-				GRID_X +
-				x * CELL_SIZE,
-
-				GRID_Y +
-				y * CELL_SIZE,
-
-				CELL_SIZE - 4,
-				CELL_SIZE - 4
-			)
+        draw_rect(
+                Rect2(
+                        0,
+                        0,
+                        480,
+                        110
+                ),
+                Color("#162329")
+        )
 
 
-			draw_rect(
-				rect,
-				grid_color,
-				true
-			)
+        # --------------------------------------
+        # GRID
+        # --------------------------------------
+
+        for y in range(ROWS):
+
+                for x in range(COLS):
+
+                        var rect := Rect2(
+                                GRID_X +
+                                x * CELL_SIZE,
+
+                                GRID_Y +
+                                y * CELL_SIZE,
+
+                                CELL_SIZE - 4,
+                                CELL_SIZE - 4
+                        )
 
 
-			draw_rect(
-				rect,
-				grid_border,
-				false,
-				2
-			)
+                        draw_rect(
+                                rect,
+                                grid_color,
+                                true
+                        )
 
 
-	# --------------------------------------
-	# PASSENGERS
-	# --------------------------------------
-
-	for i in range(passengers.size()):
-
-		var passenger = passengers[i]
-
-		if not passenger.active:
-			continue
+                        draw_rect(
+                                rect,
+                                grid_border,
+                                false,
+                                2
+                        )
 
 
-		var center: Vector2 = passenger.position
+        # --------------------------------------
+        # PASSENGERS
+        # --------------------------------------
+
+        for i in range(passengers.size()):
+
+                var passenger = passengers[i]
+
+                if not passenger.active:
+                        continue
 
 
-		# Valinnan halo
-
-		if i == selected_passenger:
-
-			draw_circle(
-				center,
-				29,
-				Color("#ffffff")
-			)
+                var center: Vector2 = passenger.position
 
 
-			draw_arc(
-				center,
-				31,
-				0,
-				TAU,
-				32,
-				colors[
-					passenger.color
-				],
-				4
-			)
+                # Valinnan halo
+
+                if i == selected_passenger:
+
+                        draw_circle(
+                                center,
+                                29,
+                                Color("#ffffff")
+                        )
 
 
-		# Keho
-
-		draw_circle(
-			center,
-			22,
-			colors[
-				passenger.color
-			]
-		)
-
-
-		# Pää
-
-		draw_circle(
-			center +
-			Vector2(
-				0,
-				-8
-			),
-			7,
-			white
-		)
+                        draw_arc(
+                                center,
+                                31,
+                                0,
+                                TAU,
+                                32,
+                                colors[
+                                        passenger.color
+                                ],
+                                4
+                        )
 
 
-		# Silmät
+                # Keho
 
-		draw_circle(
-			center +
-			Vector2(
-				-3,
-				-9
-			),
-			1.5,
-			dark
-		)
+                draw_circle(
+                        center,
+                        22,
+                        colors[
+                                passenger.color
+                        ]
+                )
 
 
-		draw_circle(
-			center +
-			Vector2(
-				3,
-				-9
-			),
-			1.5,
-			dark
-		)
+                # Pää
+
+                draw_circle(
+                        center +
+                        Vector2(
+                                0,
+                                -8
+                        ),
+                        7,
+                        white
+                )
 
 
-	# --------------------------------------
-	# BUSSIT
-	# --------------------------------------
+                # Silmät
 
-	for i in range(buses.size()):
+                draw_circle(
+                        center +
+                        Vector2(
+                                -3,
+                                -9
+                        ),
+                        1.5,
+                        dark
+                )
 
-		if not buses[i].active:
-			continue
 
-		draw_bus(i)
+                draw_circle(
+                        center +
+                        Vector2(
+                                3,
+                                -9
+                        ),
+                        1.5,
+                        dark
+                )
 
 
-	# --------------------------------------
-	# ALUE BUSSEILLE
-	# --------------------------------------
+        # --------------------------------------
+        # BUSSIT
+        # --------------------------------------
 
-	draw_string(
-		ThemeDB.fallback_font,
-		Vector2(
-			20,
-			650
-		),
-		"BUSSIT",
-		HORIZONTAL_ALIGNMENT_LEFT,
-		-1,
-		16,
-		Color("#90a4ae")
-	)
+        for i in range(buses.size()):
+
+                if not buses[i].active:
+                        continue
+
+                draw_bus(i)
+
+
+        # --------------------------------------
+        # ALUE BUSSEILLE
+        # --------------------------------------
+
+        draw_string(
+                ThemeDB.fallback_font,
+                Vector2(
+                        20,
+                        650
+                ),
+                "BUSSIT",
+                HORIZONTAL_ALIGNMENT_LEFT,
+                -1,
+                16,
+                Color("#90a4ae")
+        )
 
 
 # ==========================================
@@ -962,172 +962,172 @@ func _draw():
 # ==========================================
 
 func draw_bus(
-	index: int
+        index: int
 ):
 
-	var bus = buses[index]
+        var bus = buses[index]
 
-	var rect := get_bus_rect(
-		index
-	)
-
-
-	var bus_color = colors[
-		bus.color
-	]
+        var rect := get_bus_rect(
+                index
+        )
 
 
-	# Varjo
-
-	draw_rect(
-		Rect2(
-			rect.position +
-			Vector2(
-				0,
-				5
-			),
-			rect.size
-		),
-		Color("#080c0e"),
-		true
-	)
+        var bus_color = colors[
+                bus.color
+        ]
 
 
-	# Runko
+        # Varjo
 
-	draw_rect(
-		rect,
-		bus_color,
-		true
-	)
-
-
-	# Yläreuna
-
-	draw_rect(
-		Rect2(
-			rect.position,
-			Vector2(
-				rect.size.x,
-				8
-			)
-		),
-		Color(
-			bus_color.r * 0.75,
-			bus_color.g * 0.75,
-			bus_color.b * 0.75
-		),
-		true
-	)
+        draw_rect(
+                Rect2(
+                        rect.position +
+                        Vector2(
+                                0,
+                                5
+                        ),
+                        rect.size
+                ),
+                Color("#080c0e"),
+                true
+        )
 
 
-	# Ikkunat
+        # Runko
 
-	draw_rect(
-		Rect2(
-			rect.position +
-			Vector2(
-				8,
-				14
-			),
-			Vector2(
-				84,
-				22
-			)
-		),
-		Color("#263238"),
-		true
-	)
+        draw_rect(
+                rect,
+                bus_color,
+                true
+        )
 
 
-	# Ovi
+        # Yläreuna
 
-	draw_rect(
-		Rect2(
-			rect.position +
-			Vector2(
-				76,
-				42
-			),
-			Vector2(
-				14,
-				22
-			)
-		),
-		Color("#37474f"),
-		true
-	)
-
-
-	# Pyörät
-
-	draw_circle(
-		Vector2(
-			rect.position.x + 20,
-			rect.position.y + rect.size.y
-		),
-		9,
-		dark
-	)
+        draw_rect(
+                Rect2(
+                        rect.position,
+                        Vector2(
+                                rect.size.x,
+                                8
+                        )
+                ),
+                Color(
+                        bus_color.r * 0.75,
+                        bus_color.g * 0.75,
+                        bus_color.b * 0.75
+                ),
+                true
+        )
 
 
-	draw_circle(
-		Vector2(
-			rect.position.x + 80,
-			rect.position.y + rect.size.y
-		),
-		9,
-		dark
-	)
+        # Ikkunat
+
+        draw_rect(
+                Rect2(
+                        rect.position +
+                        Vector2(
+                                8,
+                                14
+                        ),
+                        Vector2(
+                                84,
+                                22
+                        )
+                ),
+                Color("#263238"),
+                true
+        )
 
 
-	# Matkustajat bussissa
+        # Ovi
 
-	for passenger_index in range(
-		bus.passengers.size()
-	):
-
-		var passenger_color = colors[
-			bus.passengers[
-				passenger_index
-			]
-		]
-
-
-		var passenger_pos := Vector2(
-			rect.position.x +
-			20 +
-			passenger_index * 22,
-
-			rect.position.y +
-			25
-		)
+        draw_rect(
+                Rect2(
+                        rect.position +
+                        Vector2(
+                                76,
+                                42
+                        ),
+                        Vector2(
+                                14,
+                                22
+                        )
+                ),
+                Color("#37474f"),
+                true
+        )
 
 
-		draw_circle(
-			passenger_pos,
-			7,
-			passenger_color
-		)
+        # Pyörät
+
+        draw_circle(
+                Vector2(
+                        rect.position.x + 20,
+                        rect.position.y + rect.size.y
+                ),
+                9,
+                dark
+        )
 
 
-	# Täyttömäärä
+        draw_circle(
+                Vector2(
+                        rect.position.x + 80,
+                        rect.position.y + rect.size.y
+                ),
+                9,
+                dark
+        )
 
-	draw_string(
-		ThemeDB.fallback_font,
 
-		Vector2(
-			rect.position.x + 34,
-			rect.position.y + 58
-		),
+        # Matkustajat bussissa
 
-		"%d/%d" % [
-			bus.filled,
-			bus.capacity
-		],
+        for passenger_index in range(
+                bus.passengers.size()
+        ):
 
-		HORIZONTAL_ALIGNMENT_LEFT,
-		-1,
-		14,
-		white
-	)
+                var passenger_color = colors[
+                        bus.passengers[
+                                passenger_index
+                        ]
+                ]
+
+
+                var passenger_pos := Vector2(
+                        rect.position.x +
+                        20 +
+                        passenger_index * 22,
+
+                        rect.position.y +
+                        25
+                )
+
+
+                draw_circle(
+                        passenger_pos,
+                        7,
+                        passenger_color
+                )
+
+
+        # Täyttömäärä
+
+        draw_string(
+                ThemeDB.fallback_font,
+
+                Vector2(
+                        rect.position.x + 34,
+                        rect.position.y + 58
+                ),
+
+                "%d/%d" % [
+                        bus.filled,
+                        bus.capacity
+                ],
+
+                HORIZONTAL_ALIGNMENT_LEFT,
+                -1,
+                14,
+                white
+        )
