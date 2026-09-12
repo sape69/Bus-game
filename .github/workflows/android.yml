@@ -12,12 +12,16 @@ jobs:
 
     steps:
 
+      # ==========================================
+      # CHECKOUT
+      # ==========================================
+
       - name: Checkout
         uses: actions/checkout@v4
 
 
       # ==========================================
-      # JAVA
+      # JAVA 17
       # ==========================================
 
       - name: Setup Java 17
@@ -46,17 +50,19 @@ jobs:
 
 
       # ==========================================
-      # DEBUG KEYSTORE
+      # CREATE DEBUG KEYSTORE
       # ==========================================
 
       - name: Create debug keystore
         run: |
-          mkdir -p "$HOME/.android"
+          mkdir -p /home/runner/.android
+
+          rm -f /home/runner/.android/debug.keystore
 
           keytool \
             -genkeypair \
             -v \
-            -keystore "$HOME/.android/debug.keystore" \
+            -keystore /home/runner/.android/debug.keystore \
             -storepass android \
             -alias androiddebugkey \
             -keypass android \
@@ -65,13 +71,15 @@ jobs:
             -validity 10000 \
             -dname "CN=Android Debug,O=Android,C=US"
 
-          echo "Debug keystore created"
+          echo "======================================"
+          echo "DEBUG KEYSTORE CREATED"
+          echo "======================================"
 
-          ls -lah "$HOME/.android/debug.keystore"
+          ls -lah /home/runner/.android/debug.keystore
 
 
       # ==========================================
-      # GODOT
+      # GODOT 4.5.1
       # ==========================================
 
       - name: Setup Godot 4.5.1
@@ -88,9 +96,9 @@ jobs:
 
       - name: Configure Godot Android settings
         run: |
-          mkdir -p ~/.config/godot
+          mkdir -p /home/runner/.config/godot
 
-          cat > ~/.config/godot/editor_settings-4.tres <<EOF
+          cat > /home/runner/.config/godot/editor_settings-4.tres <<EOF
           [gd_resource type="EditorSettings" format=3]
 
           [resource]
@@ -111,7 +119,7 @@ jobs:
 
 
       # ==========================================
-      # CHECK ANDROID
+      # CHECK ANDROID SDK
       # ==========================================
 
       - name: Check Android SDK
@@ -123,11 +131,13 @@ jobs:
           test -d "$ANDROID_HOME/platforms/android-35"
           test -d "$ANDROID_HOME/build-tools/35.0.1"
 
-          echo "Android SDK OK"
+          echo "======================================"
+          echo "ANDROID SDK OK"
+          echo "======================================"
 
 
       # ==========================================
-      # CREATE EXPORT PRESET
+      # CREATE ANDROID EXPORT PRESET
       # ==========================================
 
       - name: Create Android export preset
@@ -177,7 +187,7 @@ jobs:
 
           package/unique_name="com.busmatch.game"
           package/name="Bus Match"
-          package/signed=false
+          package/signed=true
           package/app_category=2
           package/retain_data_on_uninstall=false
           package/exclude_from_recents=false
@@ -224,7 +234,6 @@ jobs:
           permissions/access_wifi_state=false
           permissions/account_manager=false
           permissions/add_voicemail=false
-          permissions/add_voicemail=false
           permissions/battery_stats=false
           permissions/bind_accessibility_service=false
           permissions/call_phone=false
@@ -252,6 +261,7 @@ jobs:
           permissions/read_sms=false
           permissions/receive_boot_completed=false
           permissions/receive_mms=false
+          permissions/receive_sms=false
           permissions/record_audio=false
           permissions/request_delete_packages=false
           permissions/request_install_packages=false
@@ -271,19 +281,21 @@ jobs:
 
 
       # ==========================================
-      # VERIFY KEYSTORE
+      # VERIFY DEBUG KEYSTORE
       # ==========================================
 
       - name: Verify debug keystore
         run: |
-          test -f "$HOME/.android/debug.keystore"
+          test -f /home/runner/.android/debug.keystore
 
           keytool \
             -list \
-            -keystore "$HOME/.android/debug.keystore" \
+            -keystore /home/runner/.android/debug.keystore \
             -storepass android
 
-          echo "Debug keystore OK"
+          echo "======================================"
+          echo "DEBUG KEYSTORE VERIFIED"
+          echo "======================================"
 
 
       # ==========================================
@@ -321,18 +333,22 @@ jobs:
 
 
       # ==========================================
-      # BUILD APK
+      # BUILD ANDROID APK
       # ==========================================
 
       - name: Build Android APK
         env:
-          GODOT_ANDROID_KEYSTORE_DEBUG_PATH: ${{ env.HOME }}/.android/debug.keystore
+          GODOT_ANDROID_KEYSTORE_DEBUG_PATH: /home/runner/.android/debug.keystore
           GODOT_ANDROID_KEYSTORE_DEBUG_USER: androiddebugkey
           GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
         run: |
           mkdir -p build
 
           rm -f build/BusMatch.apk
+
+          echo "======================================"
+          echo "BUILDING ANDROID APK"
+          echo "======================================"
 
           godot \
             --headless \
@@ -344,12 +360,14 @@ jobs:
 
 
       # ==========================================
-      # VERIFY APK
+      # VERIFY APK EXISTS
       # ==========================================
 
       - name: Verify APK
         run: |
-          echo "===== BUILD RESULT ====="
+          echo "======================================"
+          echo "BUILD RESULT"
+          echo "======================================"
 
           ls -lah build
 
@@ -366,7 +384,10 @@ jobs:
 
       - name: Verify APK signature
         run: |
-          "$ANDROID_HOME/build-tools/35.0.1/apksigner" verify --verbose build/BusMatch.apk
+          "$ANDROID_HOME/build-tools/35.0.1/apksigner" \
+            verify \
+            --verbose \
+            build/BusMatch.apk
 
           echo "======================================"
           echo "APK SIGNATURE VERIFIED!"
