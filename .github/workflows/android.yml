@@ -15,14 +15,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+
+      # ==========================================
+      # JAVA
+      # ==========================================
+
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
+
+      # ==========================================
+      # ANDROID SDK
+      # ==========================================
+
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+
 
       - name: Install Android SDK
         run: |
@@ -33,12 +44,47 @@ jobs:
             "platforms;android-35" \
             "build-tools;35.0.1"
 
+
+      # ==========================================
+      # DEBUG KEYSTORE
+      # ==========================================
+
+      - name: Create debug keystore
+        run: |
+          mkdir -p "$HOME/.android"
+
+          keytool \
+            -genkeypair \
+            -v \
+            -keystore "$HOME/.android/debug.keystore" \
+            -storepass android \
+            -alias androiddebugkey \
+            -keypass android \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+
+          echo "Debug keystore created"
+
+          ls -lah "$HOME/.android/debug.keystore"
+
+
+      # ==========================================
+      # GODOT
+      # ==========================================
+
       - name: Setup Godot 4.5.1
         uses: chickensoft-games/setup-godot@v2
         with:
           version: 4.5.1
           use-dotnet: false
           include-templates: true
+
+
+      # ==========================================
+      # GODOT ANDROID SETTINGS
+      # ==========================================
 
       - name: Configure Godot Android settings
         run: |
@@ -54,9 +100,19 @@ jobs:
           export/android/shutdown_adb_on_exit = true
           EOF
 
+
+      # ==========================================
+      # CHECK GODOT
+      # ==========================================
+
       - name: Check Godot
         run: |
           godot --version
+
+
+      # ==========================================
+      # CHECK ANDROID
+      # ==========================================
 
       - name: Check Android SDK
         run: |
@@ -68,6 +124,11 @@ jobs:
           test -d "$ANDROID_HOME/build-tools/35.0.1"
 
           echo "Android SDK OK"
+
+
+      # ==========================================
+      # CREATE EXPORT PRESET
+      # ==========================================
 
       - name: Create Android export preset
         run: |
@@ -163,6 +224,7 @@ jobs:
           permissions/access_wifi_state=false
           permissions/account_manager=false
           permissions/add_voicemail=false
+          permissions/add_voicemail=false
           permissions/battery_stats=false
           permissions/bind_accessibility_service=false
           permissions/call_phone=false
@@ -190,7 +252,6 @@ jobs:
           permissions/read_sms=false
           permissions/receive_boot_completed=false
           permissions/receive_mms=false
-          permissions/receive_sms=false
           permissions/record_audio=false
           permissions/request_delete_packages=false
           permissions/request_install_packages=false
@@ -208,6 +269,27 @@ jobs:
           permissions/write_settings=false
           EOF
 
+
+      # ==========================================
+      # VERIFY KEYSTORE
+      # ==========================================
+
+      - name: Verify debug keystore
+        run: |
+          test -f "$HOME/.android/debug.keystore"
+
+          keytool \
+            -list \
+            -keystore "$HOME/.android/debug.keystore" \
+            -storepass android
+
+          echo "Debug keystore OK"
+
+
+      # ==========================================
+      # IMPORT GODOT PROJECT
+      # ==========================================
+
       - name: Import Godot project
         run: |
           godot \
@@ -215,6 +297,11 @@ jobs:
             --path . \
             --editor \
             --quit
+
+
+      # ==========================================
+      # STARTUP TEST
+      # ==========================================
 
       - name: Run game startup test
         run: |
@@ -232,9 +319,20 @@ jobs:
           echo "BUS MATCH STARTUP TEST PASSED"
           echo "======================================"
 
+
+      # ==========================================
+      # BUILD APK
+      # ==========================================
+
       - name: Build Android APK
+        env:
+          GODOT_ANDROID_KEYSTORE_DEBUG_PATH: ${{ env.HOME }}/.android/debug.keystore
+          GODOT_ANDROID_KEYSTORE_DEBUG_USER: androiddebugkey
+          GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
         run: |
           mkdir -p build
+
+          rm -f build/BusMatch.apk
 
           godot \
             --headless \
@@ -244,9 +342,15 @@ jobs:
             "Android" \
             build/BusMatch.apk
 
+
+      # ==========================================
+      # VERIFY APK
+      # ==========================================
+
       - name: Verify APK
         run: |
           echo "===== BUILD RESULT ====="
+
           ls -lah build
 
           test -f build/BusMatch.apk
@@ -254,6 +358,24 @@ jobs:
           echo "======================================"
           echo "BUS MATCH APK BUILD SUCCESSFUL!"
           echo "======================================"
+
+
+      # ==========================================
+      # VERIFY APK SIGNATURE
+      # ==========================================
+
+      - name: Verify APK signature
+        run: |
+          "$ANDROID_HOME/build-tools/35.0.1/apksigner" verify --verbose build/BusMatch.apk
+
+          echo "======================================"
+          echo "APK SIGNATURE VERIFIED!"
+          echo "======================================"
+
+
+      # ==========================================
+      # UPLOAD APK
+      # ==========================================
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
