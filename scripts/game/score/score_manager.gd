@@ -8,10 +8,6 @@ extends Node
 # ==========================================
 
 
-# ==========================================
-# DEFAULT SCORE
-# ==========================================
-
 const BOARDING_SCORE := 10
 
 
@@ -20,20 +16,20 @@ const BOARDING_SCORE := 10
 # ==========================================
 
 func add_score(
-        current_score: int,
-        amount: int
+	current_score: int,
+	amount: int
 ) -> int:
 
-        return current_score + amount
+	return current_score + amount
 
 
 # ==========================================
-# PASSENGER BOARDING SCORE
+# BOARDING SCORE
 # ==========================================
 
 func get_boarding_score() -> int:
 
-        return BOARDING_SCORE
+	return BOARDING_SCORE
 
 
 # ==========================================
@@ -42,15 +38,15 @@ func get_boarding_score() -> int:
 
 func reset_score() -> int:
 
-        return 0
+	return 0
 
 
 # ==========================================
-# GET SCORE TEXT
+# SCORE TEXT
 # ==========================================
 
 func get_score_text(
-        score: int
+	score: int
 ) -> String:
 
-        return "⭐ Pisteet: %d" % score
+	return "⭐ Pisteet: %d" % score
