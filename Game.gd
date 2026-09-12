@@ -29,7 +29,6 @@ const MOVE_TIME := 0.35
 
 var game_colors
 
-
 var colors := [
 	Color("#ef5350"),
 	Color("#42a5f5"),
@@ -37,12 +36,25 @@ var colors := [
 	Color("#ffca28")
 ]
 
-
 var dark_background := Color("#101820")
 var grid_color := Color("#263238")
 var grid_border := Color("#455a64")
 var white := Color("#ffffff")
 var dark := Color("#111111")
+
+
+# ==========================================
+# PASSENGER POSITION MODULE
+# ==========================================
+
+var passenger_position
+
+
+# ==========================================
+# GAME INPUT MODULE
+# ==========================================
+
+var game_input
 
 
 # ==========================================
@@ -75,18 +87,42 @@ var game_ui
 func _ready():
 
 	# --------------------------------------
-	# LOAD COLOR MODULE
+	# COLOR MODULE
 	# --------------------------------------
 
 	game_colors = preload(
 		"res://scripts/data/colors/game_colors.gd"
 	).new()
 
+	add_child(game_colors)
+
 	colors = game_colors.get_colors()
 
 
 	# --------------------------------------
-	# LOAD UI MODULE
+	# PASSENGER POSITION MODULE
+	# --------------------------------------
+
+	passenger_position = preload(
+		"res://scripts/passengers/position/passenger_position.gd"
+	).new()
+
+	add_child(passenger_position)
+
+
+	# --------------------------------------
+	# INPUT MODULE
+	# --------------------------------------
+
+	game_input = preload(
+		"res://scripts/game/input/game_input.gd"
+	).new()
+
+	add_child(game_input)
+
+
+	# --------------------------------------
+	# UI MODULE
 	# --------------------------------------
 
 	game_ui = preload(
@@ -201,6 +237,12 @@ func get_passenger_position(
 	grid_pos: Vector2i
 ) -> Vector2:
 
+	if passenger_position != null:
+
+		return passenger_position.get_position(
+			grid_pos
+		)
+
 	return Vector2(
 		GRID_X +
 		grid_pos.x * CELL_SIZE +
@@ -221,25 +263,24 @@ func _input(event):
 	if game_won or game_over or busy:
 		return
 
-
-	if event is InputEventMouseButton:
-
-		if event.button_index == MOUSE_BUTTON_LEFT:
-
-			if event.pressed:
-
-				handle_click(
-					event.position
-				)
+	if game_input == null:
+		return
 
 
-	if event is InputEventScreenTouch:
+	var input_position := game_input.handle_input(
+		event
+	)
 
-		if event.pressed:
 
-			handle_click(
-				event.position
-			)
+	if not game_input.has_input(
+		input_position
+	):
+		return
+
+
+	handle_click(
+		input_position
+	)
 
 
 # ==========================================
@@ -811,8 +852,6 @@ func _draw():
 		]
 
 
-		# Valinnan halo
-
 		if i == selected_passenger:
 
 			draw_circle(
@@ -832,8 +871,6 @@ func _draw():
 			)
 
 
-		# Keho
-
 		draw_circle(
 			center,
 			22,
@@ -841,266 +878,5 @@ func _draw():
 		)
 
 
-		# Pää
-
 		draw_circle(
-			center +
-			Vector2(
-				0,
-				-8
-			),
-			7,
-			white
-		)
-
-
-		# Silmät
-
-		draw_circle(
-			center +
-			Vector2(
-				-3,
-				-9
-			),
-			1.5,
-			dark
-		)
-
-
-		draw_circle(
-			center +
-			Vector2(
-				3,
-				-9
-			),
-			1.5,
-			dark
-		)
-
-
-	# --------------------------------------
-	# BUSSIT
-	# --------------------------------------
-
-	for i in range(buses.size()):
-
-		if not buses[i].active:
-			continue
-
-		draw_bus(i)
-
-
-	# --------------------------------------
-	# BUSSIT TEKSTI
-	# --------------------------------------
-
-	draw_string(
-		ThemeDB.fallback_font,
-		Vector2(
-			20,
-			650
-		),
-		"BUSSIT",
-		HORIZONTAL_ALIGNMENT_LEFT,
-		-1,
-		16,
-		Color("#90a4ae")
-	)
-
-
-# ==========================================
-# DRAW BUS
-# ==========================================
-
-func draw_bus(
-	index: int
-):
-
-	if index < 0:
-		return
-
-	if index >= buses.size():
-		return
-
-
-	var bus = buses[index]
-
-	var rect := get_bus_rect(
-		index
-	)
-
-	var bus_color: Color = colors[
-		bus.color
-	]
-
-
-	# --------------------------------------
-	# VARJO
-	# --------------------------------------
-
-	draw_rect(
-		Rect2(
-			rect.position +
-			Vector2(
-				0,
-				5
-			),
-			rect.size
-		),
-		Color("#080c0e"),
-		true
-	)
-
-
-	# --------------------------------------
-	# RUNKO
-	# --------------------------------------
-
-	draw_rect(
-		rect,
-		bus_color,
-		true
-	)
-
-
-	# --------------------------------------
-	# YLÄREUNA
-	# --------------------------------------
-
-	draw_rect(
-		Rect2(
-			rect.position,
-			Vector2(
-				rect.size.x,
-				8
-			)
-		),
-		Color(
-			bus_color.r * 0.75,
-			bus_color.g * 0.75,
-			bus_color.b * 0.75
-		),
-		true
-	)
-
-
-	# --------------------------------------
-	# IKKUNAT
-	# --------------------------------------
-
-	draw_rect(
-		Rect2(
-			rect.position +
-			Vector2(
-				8,
-				14
-			),
-			Vector2(
-				84,
-				22
-			)
-		),
-		Color("#263238"),
-		true
-	)
-
-
-	# --------------------------------------
-	# OVI
-	# --------------------------------------
-
-	draw_rect(
-		Rect2(
-			rect.position +
-			Vector2(
-				76,
-				42
-			),
-			Vector2(
-				14,
-				22
-			)
-		),
-		Color("#37474f"),
-		true
-	)
-
-
-	# --------------------------------------
-	# PYÖRÄT
-	# --------------------------------------
-
-	draw_circle(
-		Vector2(
-			rect.position.x + 20,
-			rect.position.y + rect.size.y
-		),
-		9,
-		dark
-	)
-
-
-	draw_circle(
-		Vector2(
-			rect.position.x + 80,
-			rect.position.y + rect.size.y
-		),
-		9,
-		dark
-	)
-
-
-	# --------------------------------------
-	# MATKUSTAJAT BUSSISSA
-	# --------------------------------------
-
-	for passenger_index in range(
-		bus.passengers.size()
-	):
-
-		var passenger_color: Color = colors[
-			bus.passengers[
-				passenger_index
-			]
-		]
-
-
-		var passenger_pos := Vector2(
-			rect.position.x +
-			20 +
-			passenger_index * 22,
-
-			rect.position.y +
-			25
-		)
-
-
-		draw_circle(
-			passenger_pos,
-			7,
-			passenger_color
-		)
-
-
-	# --------------------------------------
-	# TÄYTTÖMÄÄRÄ
-	# --------------------------------------
-
-	draw_string(
-		ThemeDB.fallback_font,
-
-		Vector2(
-			rect.position.x + 34,
-			rect.position.y + 58
-		),
-
-		"%d/%d" % [
-			bus.filled,
-			bus.capacity
-		],
-
-		HORIZONTAL_ALIGNMENT_LEFT,
-		-1,
-		14,
-		white
-	)
+		
