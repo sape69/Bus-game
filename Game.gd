@@ -3,7 +3,7 @@ extends Node2D
 # ==========================================
 # BUS MATCH OUT
 # ==========================================
-# Ensimmäinen modularisoitu versio
+# Ensimmäinen modularisoitu toimiva versio
 # ==========================================
 
 
@@ -20,7 +20,6 @@ const BUS_HEIGHT := 70.0
 const BUS_GAP := 15.0
 
 const PASSENGER_RADIUS := 22.0
-
 const MOVE_TIME := 0.35
 
 
@@ -30,7 +29,6 @@ var colors := [
 	Color("#66bb6a"),
 	Color("#ffca28")
 ]
-
 
 var dark_background := Color("#101820")
 var grid_color := Color("#263238")
@@ -52,7 +50,7 @@ var busy := false
 
 
 # ==========================================
-# UI MODULE
+# UI
 # ==========================================
 
 var game_ui
@@ -77,6 +75,8 @@ func _ready():
 
 	create_level()
 
+	update_info()
+
 	queue_redraw()
 
 
@@ -87,19 +87,15 @@ func _ready():
 func create_level():
 
 	passengers.clear()
-
 	buses.clear()
 
 	score = 0
-
 	lives = 3
 
 	selected_passenger = -1
 
 	game_won = false
-
 	game_over = false
-
 	busy = false
 
 
@@ -125,19 +121,19 @@ func create_level():
 
 		for x in range(COLS):
 
+			var grid_position := Vector2i(x, y)
+
 			var passenger := {
-				"grid": Vector2i(x, y),
+				"grid": grid_position,
 				"color": passenger_colors[index],
 				"active": true,
 				"moving": false,
 				"position": get_passenger_position(
-					Vector2i(x, y)
+					grid_position
 				)
 			}
 
-			passengers.append(
-				passenger
-			)
+			passengers.append(passenger)
 
 			index += 1
 
@@ -162,7 +158,6 @@ func create_level():
 
 
 	update_info()
-
 	queue_redraw()
 
 
@@ -237,7 +232,6 @@ func handle_click(pos: Vector2):
 
 		var center: Vector2 = passenger.position
 
-
 		if pos.distance_to(center) <= PASSENGER_RADIUS + 8:
 
 			select_passenger(i)
@@ -255,7 +249,6 @@ func handle_click(pos: Vector2):
 			continue
 
 		var rect := get_bus_rect(i)
-
 
 		if rect.has_point(pos):
 
@@ -281,11 +274,15 @@ func select_passenger(index: int):
 	if index >= passengers.size():
 		return
 
+	if not passengers[index].active:
+		return
+
+	if passengers[index].moving:
+		return
 
 	selected_passenger = index
 
 	update_info()
-
 	queue_redraw()
 
 
@@ -331,7 +328,6 @@ func put_passenger_in_bus(
 		selected_passenger = -1
 
 		update_info()
-
 		queue_redraw()
 
 
@@ -339,8 +335,9 @@ func put_passenger_in_bus(
 
 			game_over = true
 
-			update_info()
+			busy = false
 
+			update_info()
 			queue_redraw()
 
 		return
@@ -381,8 +378,7 @@ func put_passenger_in_bus(
 		bus.filled - 1
 	)
 
-
-	var start := passenger.position
+	var start: Vector2 = passenger.position
 
 
 	var tween := create_tween()
@@ -398,11 +394,8 @@ func put_passenger_in_bus(
 
 	tween.tween_method(
 		func(value: Vector2):
-
 			passenger.position = value
-
 			queue_redraw(),
-
 		start,
 		target,
 		MOVE_TIME
@@ -413,9 +406,7 @@ func put_passenger_in_bus(
 		func():
 
 			passenger.active = false
-
 			passenger.moving = false
-
 			busy = false
 
 			check_bus_full(
@@ -425,5 +416,653 @@ func put_passenger_in_bus(
 			check_win()
 
 			update_info()
+			queue_redraw()
+	)
 
-			queue
+
+# ==========================================
+# BUS FULL
+# ==========================================
+
+func check_bus_full(
+	bus_index: int
+):
+
+	if bus_index < 0:
+		return
+
+	if bus_index >= buses.size():
+		return
+
+
+	var bus = buses[
+		bus_index
+	]
+
+
+	if bus.filled < bus.capacity:
+		return
+
+	if bus.departing:
+		return
+
+
+	bus.departing = true
+
+	update_info()
+
+
+	var tween := create_tween()
+
+	tween.set_trans(
+		Tween.TRANS_QUAD
+	)
+
+	tween.set_ease(
+		Tween.EASE_IN
+	)
+
+
+	tween.tween_method(
+		func(value: float):
+
+			bus["offset_x"] = value
+
+			queue_redraw(),
+
+		0.0,
+		520.0,
+		0.7
+	)
+
+
+	tween.tween_callback(
+		func():
+
+			bus.active = false
+			bus.departing = false
+			bus["offset_x"] = 0.0
+
+			queue_redraw()
+	)
+
+
+# ==========================================
+# BUS POSITION
+# ==========================================
+
+func get_bus_x(
+	index: int
+) -> float:
+
+	return 15.0 + index * (
+		BUS_WIDTH + BUS_GAP
+	)
+
+
+func get_bus_rect(
+	index: int
+) -> Rect2:
+
+	var x := get_bus_x(index)
+
+	if index >= 0 and index < buses.size():
+
+		x += float(
+			buses[index].get(
+				"offset_x",
+				0.0
+			)
+		)
+
+	return Rect2(
+		x,
+		BUS_Y,
+		BUS_WIDTH,
+		BUS_HEIGHT
+	)
+
+
+# ==========================================
+# BUS PASSENGER POSITION
+# ==========================================
+
+func get_bus_passenger_position(
+	bus_index: int,
+	passenger_index: int
+) -> Vector2:
+
+	var rect := get_bus_rect(
+		bus_index
+	)
+
+	var spacing := 22.0
+
+	return Vector2(
+		rect.position.x +
+		20 +
+		passenger_index * spacing,
+
+		rect.position.y +
+		30
+	)
+
+
+# ==========================================
+# WIN
+# ==========================================
+
+func check_win():
+
+	for passenger in passengers:
+
+		if passenger.active:
+
+			return
+
+
+	game_won = true
+	busy = false
+
+	update_info()
+	queue_redraw()
+
+
+# ==========================================
+# RESTART
+# ==========================================
+
+func restart_game():
+
+	create_level()
+
+	update_info()
+
+	queue_redraw()
+
+
+# ==========================================
+# INFO
+# ==========================================
+
+func update_info():
+
+	if game_ui == null:
+		return
+
+
+	game_ui.update_score(
+		score
+	)
+
+	game_ui.update_lives(
+		lives
+	)
+
+
+	if game_won:
+
+		game_ui.update_info(
+			"🎉 VOITIT! Pisteet: %d"
+			% score
+		)
+
+		return
+
+
+	if game_over:
+
+		game_ui.update_info(
+			"💥 PELI OHI!"
+		)
+
+		return
+
+
+	var remaining := 0
+
+
+	for passenger in passengers:
+
+		if passenger.active:
+
+			remaining += 1
+
+
+	if selected_passenger >= 0:
+
+		if selected_passenger < passengers.size():
+
+			var color_index: int = passengers[
+				selected_passenger
+			].color
+
+			game_ui.update_info(
+				"Valittu: %s | Jäljellä: %d"
+				% [
+					get_color_name(
+						color_index
+					),
+					remaining
+				]
+			)
+
+	else:
+
+		game_ui.update_info(
+			"Valitse matkustaja | Jäljellä: %d"
+			% remaining
+		)
+
+
+# ==========================================
+# COLOR NAME
+# ==========================================
+
+func get_color_name(
+	index: int
+) -> String:
+
+	match index:
+
+		0:
+			return "PUNAINEN"
+
+		1:
+			return "SININEN"
+
+		2:
+			return "VIHREÄ"
+
+		3:
+			return "KELTAINEN"
+
+		_:
+			return ""
+
+
+# ==========================================
+# DRAW
+# ==========================================
+
+func _draw():
+
+	# --------------------------------------
+	# TAUSTA
+	# --------------------------------------
+
+	draw_rect(
+		Rect2(
+			0,
+			0,
+			480,
+			850
+		),
+		dark_background,
+		true
+	)
+
+
+	# --------------------------------------
+	# OTSIKON ALUE
+	# --------------------------------------
+
+	draw_rect(
+		Rect2(
+			0,
+			0,
+			480,
+			110
+		),
+		Color("#162329"),
+		true
+	)
+
+
+	# --------------------------------------
+	# GRID
+	# --------------------------------------
+
+	for y in range(ROWS):
+
+		for x in range(COLS):
+
+			var rect := Rect2(
+				GRID_X +
+				x * CELL_SIZE,
+
+				GRID_Y +
+				y * CELL_SIZE,
+
+				CELL_SIZE - 4,
+				CELL_SIZE - 4
+			)
+
+
+			draw_rect(
+				rect,
+				grid_color,
+				true
+			)
+
+
+			draw_rect(
+				rect,
+				grid_border,
+				false,
+				2
+			)
+
+
+	# --------------------------------------
+	# PASSENGERS
+	# --------------------------------------
+
+	for i in range(passengers.size()):
+
+		var passenger = passengers[i]
+
+		if not passenger.active:
+			continue
+
+
+		var center: Vector2 = passenger.position
+
+		var passenger_color: Color = colors[
+			passenger.color
+		]
+
+
+		# Valinnan halo
+
+		if i == selected_passenger:
+
+			draw_circle(
+				center,
+				29,
+				Color("#ffffff")
+			)
+
+			draw_arc(
+				center,
+				31,
+				0,
+				TAU,
+				32,
+				passenger_color,
+				4
+			)
+
+
+		# Keho
+
+		draw_circle(
+			center,
+			22,
+			passenger_color
+		)
+
+
+		# Pää
+
+		draw_circle(
+			center +
+			Vector2(
+				0,
+				-8
+			),
+			7,
+			white
+		)
+
+
+		# Silmät
+
+		draw_circle(
+			center +
+			Vector2(
+				-3,
+				-9
+			),
+			1.5,
+			dark
+		)
+
+
+		draw_circle(
+			center +
+			Vector2(
+				3,
+				-9
+			),
+			1.5,
+			dark
+		)
+
+
+	# --------------------------------------
+	# BUSSIT
+	# --------------------------------------
+
+	for i in range(buses.size()):
+
+		if not buses[i].active:
+			continue
+
+		draw_bus(i)
+
+
+	# --------------------------------------
+	# BUSSIT TEKSTI
+	# --------------------------------------
+
+	draw_string(
+		ThemeDB.fallback_font,
+		Vector2(
+			20,
+			650
+		),
+		"BUSSIT",
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1,
+		16,
+		Color("#90a4ae")
+	)
+
+
+# ==========================================
+# DRAW BUS
+# ==========================================
+
+func draw_bus(
+	index: int
+):
+
+	if index < 0:
+		return
+
+	if index >= buses.size():
+		return
+
+
+	var bus = buses[index]
+
+	var rect := get_bus_rect(
+		index
+	)
+
+	var bus_color: Color = colors[
+		bus.color
+	]
+
+
+	# --------------------------------------
+	# VARJO
+	# --------------------------------------
+
+	draw_rect(
+		Rect2(
+			rect.position +
+			Vector2(
+				0,
+				5
+			),
+			rect.size
+		),
+		Color("#080c0e"),
+		true
+	)
+
+
+	# --------------------------------------
+	# RUNKO
+	# --------------------------------------
+
+	draw_rect(
+		rect,
+		bus_color,
+		true
+	)
+
+
+	# --------------------------------------
+	# YLÄREUNA
+	# --------------------------------------
+
+	draw_rect(
+		Rect2(
+			rect.position,
+			Vector2(
+				rect.size.x,
+				8
+			)
+		),
+		Color(
+			bus_color.r * 0.75,
+			bus_color.g * 0.75,
+			bus_color.b * 0.75
+		),
+		true
+	)
+
+
+	# --------------------------------------
+	# IKKUNAT
+	# --------------------------------------
+
+	draw_rect(
+		Rect2(
+			rect.position +
+			Vector2(
+				8,
+				14
+			),
+			Vector2(
+				84,
+				22
+			)
+		),
+		Color("#263238"),
+		true
+	)
+
+
+	# --------------------------------------
+	# OVI
+	# --------------------------------------
+
+	draw_rect(
+		Rect2(
+			rect.position +
+			Vector2(
+				76,
+				42
+			),
+			Vector2(
+				14,
+				22
+			)
+		),
+		Color("#37474f"),
+		true
+	)
+
+
+	# --------------------------------------
+	# PYÖRÄT
+	# --------------------------------------
+
+	draw_circle(
+		Vector2(
+			rect.position.x + 20,
+			rect.position.y + rect.size.y
+		),
+		9,
+		dark
+	)
+
+
+	draw_circle(
+		Vector2(
+			rect.position.x + 80,
+			rect.position.y + rect.size.y
+		),
+		9,
+		dark
+	)
+
+
+	# --------------------------------------
+	# MATKUSTAJAT BUSSISSA
+	# --------------------------------------
+
+	for passenger_index in range(
+		bus.passengers.size()
+	):
+
+		var passenger_color: Color = colors[
+			bus.passengers[
+				passenger_index
+			]
+		]
+
+
+		var passenger_pos := Vector2(
+			rect.position.x +
+			20 +
+			passenger_index * 22,
+
+			rect.position.y +
+			25
+		)
+
+
+		draw_circle(
+			passenger_pos,
+			7,
+			passenger_color
+		)
+
+
+	# --------------------------------------
+	# TÄYTTÖMÄÄRÄ
+	# --------------------------------------
+
+	draw_string(
+		ThemeDB.fallback_font,
+
+		Vector2(
+			rect.position.x + 34,
+			rect.position.y + 58
+		),
+
+		"%d/%d" % [
+			bus.filled,
+			bus.capacity
+		],
+
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1,
+		14,
+		white
+	)
